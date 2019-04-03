@@ -1,0 +1,28 @@
+
+<div class="date">
+  <div class="date--time">
+    <h1>Time: {{ message }}</h1>
+  </div>
+
+  <div class="date--day">
+    <h2>Day: {{ day }}</h2>
+  </div>
+</div>
+
+<div class="search">
+  <p class=""serach__title>Find your City</p>
+<input type="text" [(ngModel)]="cityName" class="search--input" placeholder="Search">
+<button (click)="search($event);" class="search--btn">Search</button>
+</div>
+
+
+<div class="main">
+  <div  *ngFor='let item of days; let i = index' class="main--dayContainer">
+    <div class="main--dayOfWeek">{{item}}</div>
+    <div class="main--utc">{{week[i]}}/{{month}}/{{year}}</div>
+    <div *ngIf="response">
+      <div class="main--info">Температура:</div>
+        <div class="main--info">Скорость ветра: {{dailyWeather.list[0].wind.speed}}</div>
+    </div>
+  </div>
+</div>
