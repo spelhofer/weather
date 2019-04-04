@@ -17,12 +17,18 @@
 
 
 <div class="main">
-  <div  *ngFor='let item of days; let i = index' class="main--dayContainer">
+  <div  *ngFor='let item of days; let i = index' class="main--dayContainer" >
     <div class="main--dayOfWeek">{{item}}</div>
-    <div class="main--utc">{{week[i]}}/{{month}}/{{year}}</div>
-    <div *ngIf="response">
-      <div class="main--info">Температура:</div>
-        <div class="main--info">Скорость ветра: {{dailyWeather.list[0].wind.speed}}</div>
-    </div>
+    <div class="main--utc" *ngIf="week">{{week[i].numberOfMonth}}/{{month}}/{{year}}</div>
   </div>
+  <div class="main--detailsContainer">
+    <div class="main--details" *ngIf="dayInfo">
+      <div class="main--dayInfo">Минимальная Температура: {{dayInfo[0][0].main.temp_min}}</div>
+      <div class="main--dayInfo">Максимальная Температура: {{dayInfo[0][0].main.temp_max}}</div>
+      <div class="main--dayInfo">Температура: {{dayInfo[0][0].main.temp}}</div>
+      <div class="main--dayInfo">Скорость ветра: {{dayInfo[0][0].wind.speed}} </div>
+    </div>
+    <!-- <div class="main--details" *ngIf="dayInfo">Максимальная Температура: {{dayInfo[0][0].main.temp_max}}</div> -->
+  </div>
+  
 </div>
