@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
+
 @Component({
   selector: 'app-time',
   templateUrl: './time.component.html',
@@ -8,95 +9,143 @@ import { HttpClient } from '@angular/common/http';
 })
 
 export class TimeComponent implements OnInit {
-  message: string;
-  response: any;
-  cityName: any;
-  dailyWeather: any;
-
-  days: Array<string>;
-  week: Array<any>;
-  info: Array<any>;
-  dayInfo: Array<any>;
-
-  date: any = new Date();
-  hour: any = this.date.getHours();
-  day: any = this.date.getDate();
-  month: any = this.date.getMonth()+1;
-  year: any = this.date.getFullYear();
-
+  selectedDay: any = {}; //Выбраный день
+  currentDaySpecificTime: any; //Время выбранного дня
+  isNight: boolean; //смена дня и ночи
+  currentTime: string; //текущее время
+  cityName: string = 'lviv'; //временно для поисковика
+  allWeekInfoArray: Array<any>; //массив с данными сгенерированая неделя+масив с температурой + масив обьектов с временем по текущей дате
+  days: Array<string>; // отрисовка дней недели
+  today: string = new Date().toLocaleDateString(); // текущий день, дата
+  times: Array<any>; // переделать, пока масив захардкоженого времени по текущей дате
+  dayNames: Array<string>; // масив дней, для отрисовки в days 
+  show: boolean  = false;
   constructor(private http: HttpClient) {
-    this.days = ['monday', 'thuesday', 'wedsday', 'tuseday', 'friday'];
+    this.show = false;
+    this.times = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+    this.dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    this.isNight = this.getIsNight();
   }
 
-  weekGenerated(){
-    this.week = new Array(5).fill({});
+  getIsNight() {
+    var time = new Date().getHours()
+    return time < 18 && time > 7 ? false : true;
+  }
 
-    this.dayInfo = new Array(); // Создаем массив для хранения информации на каждый день
+  drawDays(allWeek, dailyWeather){
+    var obj = {};
+    var week = [];
+    var counter = 0;
+    var days = new Date(dailyWeather.list[0].dt_txt);
+    var currentIndex = days.getDay();
+    var dayIndex = currentIndex;
 
-    for(let i = 0; i < 5; i++) {
-      this.week[i] = { numberOfMonth : this.day + i }; // Записываем все 5 последующих дней с текущего дня (числамми)
-    }
-
-    let info = this.dailyWeather.list;
-      // dayInfo[i][0].main.temp - 272.15
-      // console.log(info[0].main.temp)
-
-    this.convertKelvinToCelcium(info);
-
-    for(let j = 0; j < 5; j++) {
-      let dayArray = [];
-      for(let k = 0; k < 8; k++) {
-        dayArray.push(info[k]);
+    for(var i = currentIndex; i < currentIndex + 5; i++){
+      if(dayIndex > 6){
+        dayIndex = 0;
       }
 
-      this.dayInfo.push(dayArray);
-      info.splice(0,8);
+      week.push(this.dayNames[dayIndex]);
+      obj[this.dayNames[dayIndex]] = allWeek[counter];
+
+      counter++;
+      dayIndex++;
     }
-
-    console.log(this.dayInfo);
-
+    
+    this.days = week;
   }
 
-  //TODO: средняя температура
-
-  convertKelvinToCelcium(arr){
-    for(let i = 0; i < 40; i++){
-      arr[i].main.temp = this.converDeegrease(arr[i].main.temp);
-      arr[i].main.temp_min = this.converDeegrease(arr[i].main.temp_min);
-      arr[i].main.temp_max = this.converDeegrease(arr[i].main.temp_max);
-    }
+  convertTemperature(temp){
+    return Math.floor(temp - 272.15);
   }
 
-  converDeegrease(kelvin){
-    return Math.floor(kelvin-272.15);
+  weekGenerated(res: any){
+    var list = res.list;
+
+    var allWeek = [];
+
+    var lastDay = new Date(list[0].dt_txt).getDate();
+    var dayArray = [];
+
+    for (var i = 0; i < list.length; i++){
+      var currentDay = new Date(list[i].dt_txt);
+      var result = currentDay.getDate();
+      
+      if(lastDay === result){
+        dayArray.push(list[i]);
+      } else {
+        allWeek.push(dayArray);
+        dayArray = [];
+        dayArray.push(list[i]);
+      }
+
+      lastDay = result;
+    }
+
+    this.allWeekInfoArray = allWeek.map(x => this.extractDayInfo(x));
+
+    this.drawDays(allWeek, res);
+  }
+
+  extractDayInfo(dayInfo) {
+    var minTemp = dayInfo[0].main.temp_min;
+    var maxTemp = dayInfo[0].main.temp_max; 
+    var hoursData: any = {};
+
+    for (var i = 0; i < dayInfo.length; i++){
+      minTemp = Math.min(minTemp, dayInfo[i].main.temp_min);
+      maxTemp = Math.max(maxTemp, dayInfo[i].main.temp_max);
+      var hour = new Date(dayInfo[i].dt_txt).getHours().toString();
+      hoursData[hour] = dayInfo[i];
+    }
+
+    return {
+      date: new Date(dayInfo[0].dt_txt).getDate(),
+      minTemp: minTemp,
+      maxTemp: maxTemp,
+      hoursData: hoursData
+    };
+  }
+
+  setTimeInfo(time){
+    var timeNumber = parseInt(time);
+    this.currentDaySpecificTime = this.selectedDay.hoursData[timeNumber];
+    console.log('a' , this.currentDaySpecificTime)
+  }
+  
+  setActiveClass(index){
+    var activeElements = document.querySelectorAll(".active");
+    var activeElement = document.getElementsByClassName("main--dayContainer")[index];
+
+    activeElements.forEach(element => {
+      element.classList.remove("active");
+    });
+    
+    activeElement.classList.add("active")
+  }
+
+  checkDay(index){
+    this.selectedDay = this.allWeekInfoArray[index];
+    this.setActiveClass(index);
   }
 
   search(){
-    new Promise(() => {
-      this.http
+    return this.http
         .get('https://api.openweathermap.org/data/2.5/weather?q=' + this.cityName + '&appid=5642631a5408cd74374a50283e5b52dd')
         .toPromise()
         .then(res => {
-          this.response = res;
-
-          this.http
-            .get('https://api.openweathermap.org/data/2.5/forecast?id=' + this.response.id + '&APPID=5642631a5408cd74374a50283e5b52dd')
+          return this.http
+            .get('https://api.openweathermap.org/data/2.5/forecast?id=' + (<any>res).id + '&APPID=5642631a5408cd74374a50283e5b52dd')
             .toPromise()
             .then(res => {
-              this.dailyWeather = res;
-              this.converDeegrease(res)
-              this.weekGenerated();
-            })
-        })
-    });
-
-
-  }
-  
-  
+              this.weekGenerated(res);
+              })
+          })
+    } 
+    
   ngOnInit(){
     setInterval(()=>{
-      this.message = new Date().toLocaleTimeString();
+      this.currentTime = new Date().toLocaleTimeString();
     }, 1000)
   }
 }

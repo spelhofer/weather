@@ -1,34 +1,50 @@
-
 <div class="date">
   <div class="date--time">
-    <h1>Time: {{ message }}</h1>
+    <h1>Time: {{ currentTime }}</h1>
   </div>
 
   <div class="date--day">
-    <h2>Day: {{ day }}</h2>
+    <h2>Day: {{ today }}</h2>
   </div>
 </div>
 
-<div class="search">
-  <p class=""serach__title>Find your City</p>
-<input type="text" [(ngModel)]="cityName" class="search--input" placeholder="Search">
-<button (click)="search($event);" class="search--btn">Search</button>
-</div>
-
-
-<div class="main">
-  <div  *ngFor='let item of days; let i = index' class="main--dayContainer" >
-    <div class="main--dayOfWeek">{{item}}</div>
-    <div class="main--utc" *ngIf="week">{{week[i].numberOfMonth}}/{{month}}/{{year}}</div>
-  </div>
-  <div class="main--detailsContainer">
-    <div class="main--details" *ngIf="dayInfo">
-      <div class="main--dayInfo">Минимальная Температура: {{dayInfo[0][0].main.temp_min}}</div>
-      <div class="main--dayInfo">Максимальная Температура: {{dayInfo[0][0].main.temp_max}}</div>
-      <div class="main--dayInfo">Температура: {{dayInfo[0][0].main.temp}}</div>
-      <div class="main--dayInfo">Скорость ветра: {{dayInfo[0][0].wind.speed}} </div>
+<div class="wrap">
+    <div class="search">
+       <input type="text" [(ngModel)]="cityName"  class="searchTerm" placeholder="Enter you city">
+       <button (click)="search($event);" type="button" class="searchButton">
+         <i class="searchButton__icon"></i>
+      </button>
     </div>
-    <!-- <div class="main--details" *ngIf="dayInfo">Максимальная Температура: {{dayInfo[0][0].main.temp_max}}</div> -->
+ </div>
+
+
+
+<div class="main" [class.bg--day]="!isNight" [class.bg--night]="isNight">
+  <div *ngFor='let item of days; let i = index; let z = allWeekInfoArray' (click)="checkDay(i)" class="main--dayContainer" >
+    <div class="main--dayOfWeek">{{item}}</div>
+    <div class="day--cell">Мax.темп: {{convertTemperature(allWeekInfoArray[i].maxTemp)}}</div>
+    <div class="day--cell">Мин.темп: {{convertTemperature(allWeekInfoArray[i].minTemp)}}</div>
+    <div class="day--cell">Число: {{allWeekInfoArray[i].date}}</div>
   </div>
   
+  <div class="main--detailsContainer" >
+    <div class="main--detailsContainer__hours">
+      <div *ngFor='let item of times; let i = index' class="main--details">
+        <div (click)="setTimeInfo(item)"  class="main--dayInfo">{{i * 3}} : 00</div> 
+      </div>
+    </div>
+    <div class="main--detailsContainer__detailsInfo" *ngIf="currentDaySpecificTime">
+      <div class="main--detailsContainer__cell">Температура: {{convertTemperature(currentDaySpecificTime.main.temp)}}</div>
+      <div class="main--detailsContainer__cell">Влажность: {{currentDaySpecificTime.main.humidity}}%</div>
+      <div class="main--detailsContainer__cell">Ветер: {{currentDaySpecificTime.wind.speed}} м\с</div>
+      <div class="main--detailsContainer__cell">
+        Осадки: 
+        <div *ngFor='let item of currentDaySpecificTime.weather;'>
+          {{item.main}}
+        </div>
+      
+      </div>
+      <div class="main--detailsContainer__cell">Давление: {{currentDaySpecificTime.main.pressure}}</div>
+    </div>
+  </div>
 </div>
